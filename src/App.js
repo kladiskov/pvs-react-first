@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import classes from './App.css'
 import Person from './Person/Person'
-import ExceptionHandler from './ExceptionHandler/ExceptionHandler'
 
 class App extends Component {
   state = {
@@ -46,12 +45,12 @@ class App extends Component {
       persons = (
         <div>
           {this.state.persons.map((person, index) => {
-            return <ExceptionHandler><Person
+            return <Person
               click={() => this.deletePersonHandler(index)}
               key={person.id}
               name={person.name}
               age={person.age}
-              changed={(event) => this.nameChangeHandler(event, person.id)} /></ExceptionHandler>
+              changed={(event) => this.nameChangeHandler(event, person.id)} />
           })}
         </div>
       );
