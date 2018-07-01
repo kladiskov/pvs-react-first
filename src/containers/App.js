@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import Persons from '../components/Persons/Persons';
 import Cockpit from '../components/Cockpit/Cockpit';
 import classes from './App.css'
+import WithClsass from '../hoc/WithClass';
+
+const AuthContext = React.createContext(false);
 
 class App extends Component {
   constructor(props) {
@@ -19,7 +22,8 @@ class App extends Component {
       { id: 'id2', name: "hunt", age: "31" },
       { id: 'id3', name: "bond", age: "34" }
     ],
-    showPersons: false
+    showPersons: false,
+    authenticated: false
 
   }
 
@@ -61,8 +65,21 @@ class App extends Component {
     console.log('[UPDATE App.js] inside componentWillUpdate', nextProps, nextState);
   }
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    console.log('[UPDATE App.js] inside getDerivedStateFromProps', nextProps, prevState);
+    return prevState;
+  }
+
+  getSnapshotBeforeUpdate() {
+    console.log('[UPDATE App.js] inside getSnapshotBeforeUpdate');
+  }
+
   componentDidUpdate() {
     console.log('[UPDATE App.js] inside componentDidUpdate', this.props, this.state);
+  }
+
+  loginHandler = () => {
+    this.setState({authenticated: true});   
   }
 
 
@@ -76,14 +93,16 @@ class App extends Component {
         changed={this.nameChangeHandler} />;
     }
     return (
-      <div className={classes.App}>
+      <WithClsass classes={classes.App}>
         <Cockpit
           appTitle={this.props.title}
           showPersons={this.state.showPersons}
           persons={this.state.persons}
-          clicked={this.togglePersonsHandler} />
+          login={this.loginHandler}
+          clicked={this.togglePersonsHandler} 
+          isAuthenticated={this.state.authenticated}/>
         {persons}
-      </div>
+      </WithClsass>
     );
     //return React.createElement('div', {className: 'App'}, React.createElement('h1', null, 'Hi I\'m a react app!!!'));
   }

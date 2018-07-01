@@ -41,6 +41,8 @@ class Persons extends Component {
                 key={person.id}
                 name={person.name}
                 age={person.age}
+                position={index}
+                authenticated={this.props.isAuthenticated}
                 changed={(event) => this.props.changed(event, person.id)} />
         });
     }

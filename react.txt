@@ -1,0 +1,234 @@
+1. How does react updates the dom
+    - render() doesn't immediatly update dom. IT gives a suggestion of how the html looks like.
+    - shouldComponentUPdate can be passed on to it to prevent unnecessary render calls.
+    - even if we dont catch unnecessary render calls, it doesn't means it immediatly hit the dom and rerender
+        instead it compares virtual doms - old and future/rerendered virtual doms. Virtual doms are represented in 
+        javaScript (instead of actual dom which is in browser.). - and the actual dom is updated only where there is 
+        real change. 
+    - virtual dom makes sense - because accessing the actual dom slows down thats why react uses virtual dom.
+
+2. Higher order Components: 
+    - a normal react component that wraps other Components to add a certain functionality.
+
+   - step 1.  Create WithClass.js:
+
+    import React from 'react';
+
+    const withClass = (props) => (
+        <div className={props.classes}>
+            {props.children}
+        </div>
+    );
+
+    export default withClass;
+
+    - step 2. import WithClass in components and wrap it - eg: App.js:
+
+    import WithClsass from '../hoc/WithClass';
+
+    in return:
+
+     return (
+      <WithClsass classes={classes.App}>
+        <Cockpit
+          appTitle={this.props.title}
+          showPersons={this.state.showPersons}
+          persons={this.state.persons}
+          clicked={this.togglePersonsHandler} />
+        {persons}
+      </WithClsass>
+    );
+
+    we will get the same styling as before with our custom HOC (WithClass). This can be used in other js files like Person.js as well.
+
+    HOCs can return the following:
+
+        - components with jsx
+        - components without jsx
+        - stateful components
+
+    Returning stateful:
+
+        const withClass = (WrappedComponent, className) => (
+        return class extends Component(props) => (
+           render() {
+               return (
+                   <div className={className}>
+                        <WrappedComponent {...this.props}
+                   </div>     
+               )
+           }
+        )
+    );
+
+3. setState revisited:
+    - react execute setState asynchronsouly. We cannot rely on 'this.state' value:
+    ....
+    ....
+    this.setState({
+        showPersons: !doesShow,
+        numberOfClicks: this.state.numberOfClicks + 1//example state variable to count number of button clicks.
+    });
+    ....
+
+    If we call setState in some other location, incorrect behaviours may happen. 
+
+    In order to avoid this use this approach:
+
+     this.setState((prevState, props) => {
+         return {
+             showPersons: !doesShow,
+            numberOfClicks: prevState.numberOfClicks + 1
+         }
+     });
+     .....
+
+4. validating props
+package 'prop-types' helps in validating props.
+Following command will install prop-types.
+npm install --save prop-types
+How to use:
+Eg: Person.js:
+step 1: import PropTypes from 'prop-types';
+step 2: 
+
+Person.prototypes = {
+    click:PropTypes.func,
+    name:PropTypes.string,
+    age:PropTypes.number,
+    changed:PropTypes.func 
+};
+
+This will set the expectation for each of these properties and this trigger an error if the above conditions fails.
+- Helpful in teams where components sharing between team members.
+
+5. Using References ("ref") 
+---------------------------
+- this comes handy in stateful components when there is a need to reference an element
+- usages: controlling UI gestures like focus, play/pause video etc.
+: example usage - when an element need to focus in the UI:
+
+Person.js:
+
+step 1 - add ref in render:
+
+render() {
+        console.log('[Person.js] inside render');
+        return (<div className={classes.Person}>
+            <p onClick={this.props.click}> Hi, I am {this.props.name} and I am {this.props.age} years old</p>
+            <p>{this.props.children}</p>
+            <input
+                ref={(input) => {this.inputElement = input}}//inputElement is a new property now we have created.
+                type="text"
+                onChange={this.props.changed}
+                value={this.props.name} />
+        </div>)
+    }
+step -2 in componentDidMount set the focus:
+
+ componentDidMount() {
+        console.log('[Person.js] inside componentDidMount');
+        this.inputElement.focus();
+    }
+This will set the focus on last element. To set focus for a specfic position, pass the position index and conitionally set the focus.
+
+step 4: In 'Persons.js', set the position:
+
+ render() {
+        console.log('[Persons.js] inside render');
+        return this.props.persons.map((person, index) => {
+            return <Person
+                click={() => this.props.clicked(index)}
+                key={person.id}
+                name={person.name}
+                age={person.age}
+                position={index}//set position
+                changed={(event) => this.props.changed(event, person.id)} />
+        });
+    }
+
+step 5.IN Person.js, update the componentDidMount to invoke focus conditionally:
+
+componentDidMount() {
+        console.log('[Person.js] inside componentDidMount');
+        if (this.props.position === 0)
+            this.inputElement.focus();
+    }
+
+5.1. Ref API(React 16.3)
+------------------------
+1. Certain improvements over the previous ref has been introduced in 16.3:
+
+in Person.js:
+
+step 1 - create ref:
+
+class Person extends Component {
+    constructor(props) {
+        super(props);
+        console.log('[Person.js]inside constructor', props);
+        this.inputElement = React.createRef();//createRef is a new method to create a refernce.
+    }
+-----
+-----
+
+step -2 update previous ref impl in render:
+----
+----
+<input
+    ref={this.inputElement}
+    type="text"
+    onChange={this.props.changed}
+    value={this.props.name} />
+</div>)
+----
+
+step - 3, in componentDidMount:
+
+ if (this.props.position === 0)
+    this.inputElement.current.focus();//inputElement is wrapper and current gives access to the underlying dom element.
+
+2. Forwarded ref:
+    - we actually get a ref from outside of a component through that component. Helpful in working with HOCs.
+
+6.Context API (16.3 feature)
+----------------------------
+- This is useful for passing global state around various components.
+- instead of passing this global state across various component, context API provides a simpler approach.
+declare and export in In App.js:
+
+----
+----
+const AuthContext = React.createContext(false);
+
+and export it using : export const AuthContext = React.createContext(false);
+
+and import in components, where you want to use it.
+
+class App extends Component {
+
+and we can use AuthContext.Provider any component like App.js for Persons component:
+
+<AuthContext.Provider value={this.state.authenticated}>{Persons}</AuthContext.Provider>
+
+7. UPdated lifecycle hooks (React 16.3)
+
+- following methods should be avoided as per the 16.3. recomondation:
+
+    componentWillUpdate
+    componentWillMount
+    ComponentWillReceiveProps 
+    Because incorrect usage of these methods may create some issues.
+
+- INstead it suggests using the following:
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        console.log('[UPDATE App.js] inside getDerivedStateFromProps', nextProps, prevState);
+        return prevState;
+  }
+
+  This method gets called before render and componentDidMount.That means we can still make some changes to the state before rendering.
+
+  
+
+  - This allows you to take a snapshot of dom before making dom update.
